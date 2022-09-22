@@ -3,44 +3,37 @@ import { json, redirect } from "@remix-run/node";
 import { Form, useCatch, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
 
-import { deleteNote, getNote } from "~/models/note.server";
+import { deleteShip, getShip } from "~/models/ship.server";
 import { requireUserId } from "~/session.server";
 
 export async function loader({ request, params }: LoaderArgs) {
   const userId = await requireUserId(request);
-  invariant(params.noteId, "noteId not found");
+  invariant(params.shipId, "shipId not found");
 
-  const note = await getNote({ userId, id: params.noteId });
-  if (!note) {
+  const ship = await getShip({ userId, id: params.shipId });
+  if (!ship) {
     throw new Response("Not Found", { status: 404 });
   }
-  return json({ note });
+  return json({ ship });
 }
 
 export async function action({ request, params }: ActionArgs) {
   const userId = await requireUserId(request);
-  invariant(params.noteId, "noteId not found");
+  invariant(params.shipId, "shipId not found");
 
-  await deleteNote({ userId, id: params.noteId });
+  await deleteShip({ userId, id: params.shipId });
 
-  return redirect("/notes");
+  return redirect("/ships");
 }
 
-export default function NoteDetailsPage() {
+export default function ShipDetailsPage() {
   const data = useLoaderData<typeof loader>();
 
   return (
     <div>
-      <h3 className="text-2xl font-bold">{data.note.title}</h3>
-      <p className="py-6">{data.note.body}</p>
-      <hr className="my-4" />
+      <h3>{data.ship.name}</h3>
       <Form method="post">
-        <button
-          type="submit"
-          className="rounded bg-blue-500  py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400"
-        >
-          Delete
-        </button>
+        <button type="submit">Delete</button>
       </Form>
     </div>
   );
@@ -56,7 +49,7 @@ export function CatchBoundary() {
   const caught = useCatch();
 
   if (caught.status === 404) {
-    return <div>Note not found</div>;
+    return <div>Ship not found</div>;
   }
 
   throw new Error(`Unexpected caught response with status: ${caught.status}`);
