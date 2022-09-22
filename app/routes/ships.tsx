@@ -17,7 +17,7 @@ export default function ShipsPage() {
   const user = useUser();
 
   return (
-    <div>
+    <div className="h-full">
       <header>
         <h1>
           <Link to=".">Ships</Link>
@@ -28,13 +28,11 @@ export default function ShipsPage() {
         </Form>
       </header>
 
-      <main className="flex h-full bg-white">
-        <div className="h-full w-80 border-r bg-gray-50">
-          <Link to="new" className="block p-4 text-xl text-blue-500">
+      <main className="flex h-full bg-black text-orange-400">
+        <div className="h-full w-80 divide-y-2 divide-orange-400">
+          <Link to="new" className="block p-4">
             + New Ship
           </Link>
-
-          <hr />
 
           {data.shipListItems.length === 0 ? (
             <p className="p-4">No ships yet</p>
@@ -44,11 +42,11 @@ export default function ShipsPage() {
                 <li key={ship.id}>
                   <NavLink
                     className={({ isActive }) =>
-                      `block border-b p-4 text-xl ${isActive ? "bg-white" : ""}`
+                      `block p-4 ${isActive ? " bg-orange-400 text-black" : ""}`
                     }
                     to={ship.id}
                   >
-                    📝 {ship.name}
+                    {ship.name}
                   </NavLink>
                 </li>
               ))}
