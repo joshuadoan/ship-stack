@@ -17,8 +17,8 @@ export default function ShipsPage() {
   const user = useUser();
 
   return (
-    <div className="h-full">
-      <header>
+    <div className="flex h-full flex-col bg-black text-orange-400">
+      <header className="bg-or flex space-x-4 bg-orange-400 p-4 text-black">
         <h1>
           <Link to=".">Ships</Link>
         </h1>
@@ -28,8 +28,8 @@ export default function ShipsPage() {
         </Form>
       </header>
 
-      <main className="flex h-full bg-black text-orange-400">
-        <div className="h-full w-80 divide-y-2 divide-orange-400">
+      <main className="flex flex-1 ">
+        <div className="h-full w-80">
           <Link to="new" className="block p-4">
             + New Ship
           </Link>
