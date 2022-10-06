@@ -1,16 +1,15 @@
+import type { ReactNode } from "react";
+import { useEffect, useReducer, useState } from "react";
+import { Form, useCatch, useLoaderData } from "@remix-run/react";
+import { json, redirect } from "@remix-run/node";
 import { v4 as uuidv4 } from "uuid";
 import cx from "classnames";
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { Form, useCatch, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
-
+import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { deleteShip, getShip } from "~/models/ship.server";
 import { requireUserId } from "~/session.server";
-import { ReactNode, useEffect, useReducer, useState } from "react";
 
 const NUM_STARS = 20;
-
 const PLAYER_POSITION = Math.floor(NUM_STARS / 2);
 
 export async function loader({ request, params }: LoaderArgs) {
@@ -49,20 +48,16 @@ export default function ShipDetailsPage() {
     let interval: NodeJS.Timer = setInterval(() => {
       switch (state.speed) {
         case "on": {
-          const guest = destinations.find(
-            (destination) =>
-              destination.location.x === state.location.x + PLAYER_POSITION + 1
-          );
-          if (guest) {
+          if (destinations[state.location.x + PLAYER_POSITION + 1]) {
             dispatch("stop");
-            setLocation(guest);
+            setLocation(destinations[state.location.x + PLAYER_POSITION + 1]);
             return;
           }
           dispatch("forward");
           return;
         }
       }
-    }, 100);
+    }, 500);
     return () => clearInterval(interval);
   }, [location, state.location.x, state.speed]);
 
@@ -111,15 +106,16 @@ export default function ShipDetailsPage() {
               </Button>
             );
           }
-          const guest = destinations.find(
-            (destination) => destination.location.x === state.location.x + x
-          );
 
-          if (guest) return <Button key={x}>{guest.icon}</Button>;
+          if (destinations[state.location.x + x])
+            return (
+              <Button key={x}>{destinations[state.location.x + x].icon}</Button>
+            );
 
           return <Button key={x}>✨</Button>;
         })}
       </div>
+
       <div
         className={cx(
           "border border-orange-400 p-4  transition-opacity duration-1000 ease-out",
@@ -201,39 +197,31 @@ type Destination = {
   name: string;
   guests: Guest[];
   type: "Asteroid" | "SpaceBar" | "Home" | "Ship" | "Moon";
-  location: Location;
   icon: Icon;
 };
 
-const destinations: Destination[] = [
-  {
+const destinations: {
+  [kwy: number]: Destination;
+} = {
+  20: {
     id: uuidv4(),
     name: "Asteroid 42",
     guests: [],
     type: "Asteroid",
-    location: {
-      x: NUM_STARS,
-    },
     icon: "☄️",
   },
-  {
+  30: {
     id: uuidv4(),
     name: "Moon 42",
     guests: [],
     type: "Moon",
-    location: {
-      x: NUM_STARS + 5,
-    },
     icon: "🌙 ",
   },
-  {
+  40: {
     id: uuidv4(),
     name: "Big Steve",
     guests: [],
     type: "Ship",
-    location: {
-      x: NUM_STARS + 10,
-    },
     icon: "👾",
   },
-];
+};
