@@ -2,12 +2,13 @@ import type { ReactNode } from "react";
 import { useEffect, useReducer, useState } from "react";
 import { Form, useCatch, useLoaderData } from "@remix-run/react";
 import { json, redirect } from "@remix-run/node";
-import { v4 as uuidv4 } from "uuid";
 import cx from "classnames";
 import invariant from "tiny-invariant";
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { deleteShip, getShip } from "~/models/ship.server";
 import { requireUserId } from "~/session.server";
+import { destinations } from "./data";
+import type { Destination, EventNames, State } from "./types";
 
 const NUM_STARS = 20;
 const PLAYER_POSITION = Math.floor(NUM_STARS / 2);
@@ -42,15 +43,13 @@ export default function ShipDetailsPage() {
     },
   });
 
-  let [location, setLocation] = useState<Destination | null>(null);
-
   useEffect(() => {
     let interval: NodeJS.Timer = setInterval(() => {
+      const visiting = destinations[state.location.x + PLAYER_POSITION + 1];
       switch (state.speed) {
         case "on": {
-          if (destinations[state.location.x + PLAYER_POSITION + 1]) {
+          if (visiting) {
             dispatch("stop");
-            setLocation(destinations[state.location.x + PLAYER_POSITION + 1]);
             return;
           }
           dispatch("forward");
@@ -59,7 +58,7 @@ export default function ShipDetailsPage() {
       }
     }, 500);
     return () => clearInterval(interval);
-  }, [location, state.location.x, state.speed]);
+  }, [state.location.x, state.speed]);
 
   useEffect(() => {
     if (state.speed === "on") return;
@@ -92,7 +91,8 @@ export default function ShipDetailsPage() {
       </h3>
       <div className="flex flex-wrap">
         {[...Array(NUM_STARS)].map((_, x) => {
-          const isPlayerPosition = x === PLAYER_POSITION;
+          let isPlayerPosition = x === PLAYER_POSITION;
+          let location = destinations[state.location.x + x];
 
           if (isPlayerPosition) {
             return (
@@ -107,12 +107,18 @@ export default function ShipDetailsPage() {
             );
           }
 
-          if (destinations[state.location.x + x])
-            return (
-              <Button key={x}>{destinations[state.location.x + x].icon}</Button>
-            );
+          if (location) return <Button key={x}>{location.icon}</Button>;
 
-          return <Button key={x}>✨</Button>;
+          return (
+            <Button
+              key={x}
+              className={cx({
+                "p-1": x % 2,
+              })}
+            >
+              ✨
+            </Button>
+          );
         })}
       </div>
 
@@ -125,7 +131,9 @@ export default function ShipDetailsPage() {
           }
         )}
       >
-        <p>Visiting {location?.name}</p>
+        <p>
+          Visiting {destinations[state.location.x + PLAYER_POSITION - 1]?.name}
+        </p>
       </div>
     </div>
   );
@@ -147,18 +155,9 @@ export function CatchBoundary() {
   throw new Error(`Unexpected caught response with status: ${caught.status}`);
 }
 
-type Speed = "off" | "on";
-
-type State = {
-  speed: Speed;
-  location: Location;
-};
-
-type Event = "start" | "stop" | "forward";
-
-let reducer = (state: State, event: Event) => {
+let reducer = (state: State, event: EventNames) => {
   let definition: {
-    [key in Event]?: State;
+    [key in EventNames]?: State;
   } = {
     start: {
       ...state,
@@ -177,51 +176,4 @@ let reducer = (state: State, event: Event) => {
   };
 
   return definition[event] ?? state;
-};
-
-type Icon = "🚀" | "☄️" | "🌙 " | "👾";
-
-type Location = {
-  x: number;
-};
-
-type Guest = {
-  id: string;
-  type: "ship";
-  location: Location;
-  icon: Icon;
-};
-
-type Destination = {
-  id: string;
-  name: string;
-  guests: Guest[];
-  type: "Asteroid" | "SpaceBar" | "Home" | "Ship" | "Moon";
-  icon: Icon;
-};
-
-const destinations: {
-  [kwy: number]: Destination;
-} = {
-  20: {
-    id: uuidv4(),
-    name: "Asteroid 42",
-    guests: [],
-    type: "Asteroid",
-    icon: "☄️",
-  },
-  30: {
-    id: uuidv4(),
-    name: "Moon 42",
-    guests: [],
-    type: "Moon",
-    icon: "🌙 ",
-  },
-  40: {
-    id: uuidv4(),
-    name: "Big Steve",
-    guests: [],
-    type: "Ship",
-    icon: "👾",
-  },
 };
